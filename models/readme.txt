@@ -9,7 +9,7 @@ output: (box_regression, classification, landmarks_regressions)
 
 	H': feature map height, W': feature map weight (H'*W' will be the maximum num of faces able to be detected)
 
-usage: initialize with a model config ( written in config.py)
+usage: initialize with a model config (written in config.py)
 	
 resnet50: 104 MB
 mobilenet: 1.75 MB
