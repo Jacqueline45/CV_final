@@ -8,6 +8,8 @@ output: (box_regression, classification, landmarks_regressions)
 	landmark_regression: [batch_size, H'*W', 10], coordinates of (x, y) of five landmarks of a face
 
 	H': feature map height, W': feature map weight (H'*W' will be the maximum num of faces able to be detected)
+
+usage: initialize with a model config ( written in config.py)
 	
 resnet50: 104 MB
 mobilenet: 1.75 MB
