@@ -147,8 +147,7 @@ def train(writer):
         print('Epoch:{}/{} || Epochiter: {}/{} || Iter: {}/{} || Loc: {:.4f} Cla: {:.4f} Landm: {:.4f} || LR: {:.8f} || Batchtime: {:.4f} s || ETA: {}'
               .format(epoch, max_epoch, (iteration % epoch_size) + 1,
               epoch_size, iteration + 1, max_iter, loss_l.item(), loss_c.item(), loss_landm.item(), lr, batch_time, str(datetime.timedelta(seconds=eta))))
-        if (epoch) % save_epoch_step == 0:
-          torch.save(net.state_dict(), os.path.join(save_folder, "{}_epoch{}.pth".format(cfg['name'], epoch)))
+ 
     torch.save(net.state_dict(), save_folder + cfg['name'] + '_Final.pth')
     # torch.save(net.state_dict(), save_folder + 'Final_Retinaface.pth')
 
