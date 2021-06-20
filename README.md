@@ -24,7 +24,7 @@ mode = "test" or "val"
 !python3 setup.py build_ext --inplace
 !python3 evaluation.py  -p ./solution.txt -g ./ground_truth/val_gt.pkl -lm
 ```
-- draw learning curve
+- Draw learning curve  
 Place the loginfo in a file name log/.  
 When executing this instruction again, there will be messages reminding you to kill past processes, just kill it by ```!kill PROCESS_NUM```.  
 ```
