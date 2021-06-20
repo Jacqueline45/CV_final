@@ -1,19 +1,13 @@
-"""
-modify from
-https://github.com/biubug6/Pytorch_Retinaface
-"""
-
 import torch
 import torch.nn as nn
-# import torchvision.models.detection.backbone_utils as backbone_utils
-import torchvision.models as models
+import torchvision.models.detection.backbone_utils as backbone_utils
 import torchvision.models._utils as _utils
 import torch.nn.functional as F
 from collections import OrderedDict
 
-from models.nets import MobileNetV1 as MobileNetV1
-from models.nets import FPN as FPN
-from models.nets import SSH as SSH
+from models.net import MobileNetV1 as MobileNetV1
+from models.net import FPN as FPN
+from models.net import SSH as SSH
 
 
 
@@ -52,28 +46,29 @@ class LandmarkHead(nn.Module):
         return out.view(out.shape[0], -1, 10)
 
 class RetinaFace(nn.Module):
-    def __init__(self, cfg, phase='train'):
+    def __init__(self, cfg = None, phase = 'train'):
         """
-        :param args:  Network related settings.
+        :param cfg:  Network related settings.
         :param phase: train or test.
         """
         super(RetinaFace,self).__init__()
         self.phase = phase
         backbone = None
-        if cfg['name'] == 'Resnet50':
-            backbone = models.resnet50(cfg['pretrain'])
         if cfg['name'] == 'mobilenet0.25':
             backbone = MobileNetV1()
-            # if cfg['pretrain']:
-            #     checkpoint = torch.load("./weights/mobilenetV1X0.25_pretrain.tar", map_location=torch.device('cpu'))
-            #     from collections import OrderedDict
-            #     new_state_dict = OrderedDict()
-            #     for k, v in checkpoint['state_dict'].items():
-            #         name = k[7:]  # remove module.
-            #         new_state_dict[name] = v
-            #     # load params
-            #     backbone.load_state_dict(new_state_dict)
-      
+            if cfg['pretrain']:
+                checkpoint = torch.load("./weights/mobilenetV1X0.25_pretrain.tar", map_location=torch.device('cpu'))
+                from collections import OrderedDict
+                new_state_dict = OrderedDict()
+                for k, v in checkpoint['state_dict'].items():
+                    name = k[7:]  # remove module.
+                    new_state_dict[name] = v
+                # load params
+                backbone.load_state_dict(new_state_dict)
+        elif cfg['name'] == 'Resnet50':
+            import torchvision.models as models
+            backbone = models.resnet50(pretrained=cfg['pretrain'])
+
         self.body = _utils.IntermediateLayerGetter(backbone, cfg['return_layers'])
         in_channels_stage2 = cfg['in_channel']
         in_channels_list = [

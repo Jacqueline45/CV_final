@@ -97,6 +97,8 @@ class FPN(nn.Module):
         out = [output1, output2, output3]
         return out
 
+
+
 class MobileNetV1(nn.Module):
     def __init__(self):
         super(MobileNetV1, self).__init__()
@@ -132,3 +134,4 @@ class MobileNetV1(nn.Module):
         x = x.view(-1, 256)
         x = self.fc(x)
         return x
+
