@@ -9,7 +9,7 @@ First, git clone this repo (specify -b dev), and download dataset, toolkit on co
 ```
 !gdown --id '12gyZX7DMlyPsSHtXalwB44xtkp1hu2H2' --output face_detection.zip
 !unzip face_detection.zip
-!git clone -b dev https://github.com/Jacqueline45/CV_final.git
+!git clone -b dev https://[GITHUB USERNAME]:[GITHUB PASSWORD]@github.com/Jacqueline45/CV_final.git
 !pip install tensorboardX
 ```
 - train
