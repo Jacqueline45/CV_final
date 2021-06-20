@@ -3,7 +3,7 @@
 Modify from : https://github.com/biubug6/Pytorch_Retinaface  
 - ```train.py```: add tensorboard for train loss, **validation loss not yet written**  
 - ```config.py```: pretrain, True->False
-- ```test_widerface.py```: change read data way, **not yet parallelize (original version process each image one by one, which takes about 20 minutes on validation set)**
+- ```test_widerface.py```: change read data way, **not yet parallelize (original version process each image one by one, I think the time is acceptable when the model detects reasonable number of faces)**
 ## Usage
 First, git clone this repo (specify -b dev), and download dataset, toolkit on colab.
 ```
