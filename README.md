@@ -6,6 +6,12 @@ Modify from : https://github.com/biubug6/Pytorch_Retinaface
 - ```test_widerface.py```: change read data way, **not yet parallelize (original version process each image one by one, which takes about 20 minutes on validation set)**
 ## Usage
 First, git clone this repo (specify -b dev), and download dataset, toolkit on colab.
+```
+!gdown --id '12gyZX7DMlyPsSHtXalwB44xtkp1hu2H2' --output face_detection.zip
+!unzip face_detection.zip
+!git clone -b dev https://github.com/Jacqueline45/CV_final.git
+!pip install tensorboardX
+```
 - train
 ```
 % cd　/content/CV_final/
