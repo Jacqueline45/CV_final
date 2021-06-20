@@ -24,12 +24,15 @@ parser.add_argument('--resume_net', default=None, help='resume net for retrainin
 parser.add_argument('--resume_epoch', default=0, type=int, help='resume iter for retraining')
 parser.add_argument('--weight_decay', default=5e-4, type=float, help='Weight decay for SGD')
 parser.add_argument('--gamma', default=0.1, type=float, help='Gamma update for SGD')
-parser.add_argument('--save_folder', default='../drive/MyDrive/CV_final_output/weights/', help='Location to save checkpoint models')
-
+parser.add_argument('--save_dir', default='../drive/MyDrive/CV_final_output/', help='root dir for weight and runs')
+parser.add_argument('--run', default='tmp', help='run name for tensorboard writer')
 args = parser.parse_args()
-
+args.save_folder = os.path.join(args.save_dir, "weights")
+args.run_folder = os.path.join(args.save_dir, "runs", args.run)
 if not os.path.exists(args.save_folder):
     os.makedirs(args.save_folder)
+if not os.path.exists(args.run_folder):
+    os.makedirs(args.run_folder)
 cfg = None
 if args.network == "mobile0.25":
     cfg = cfg_mnet
@@ -57,7 +60,7 @@ net = RetinaFace(cfg=cfg)
 print("Printing net...")
 print(net)
 
-writer = SummaryWriter("../drive/MyDrive/CV_final_output/runs/mbnetv1")
+writer = SummaryWriter(args.run_folder)
 
 if args.resume_net is not None:
     print('Loading resume network...')
