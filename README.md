@@ -12,6 +12,12 @@ First, git clone this repo (specify -b dev), and download dataset, toolkit on co
 !CUDA_VISIBLE_DEVICES=0 python train.py --network mobile0.25 --training_dataset --save_folder
 ```
 recommend saving weights to google drive
+- test
+```
+% cd /content/CV_final/
+!python test_widerface.py --trained_model ../mobilenet0.25_epoch_10.pth --network mobile0.25 --txt_pth "./solution.txt" --mode "test"
+```
+mode = "test" or "val"
 - evaluate
 ```
 % cd　/content/face_detection/eval_toolkit
