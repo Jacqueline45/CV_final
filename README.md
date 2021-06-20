@@ -15,9 +15,10 @@ First, git clone this repo (specify -b dev), and download dataset, toolkit on co
 - train
 ```
 % cd　/content/CV_final/
-!CUDA_VISIBLE_DEVICES=0 python train.py --network mobile0.25 --training_dataset --save_folder
+!CUDA_VISIBLE_DEVICES=0 python train.py --network mobile0.25 --training_dataset [path to train/label.txt] --save_dir [root dir for weights/ and runs/] --run [run name] [--resume_net [model path]] [--resume_epoch [epoch]]
 ```
-recommend saving weights to google drive
+Recommend saving weights to google drive, i.e. save_dir should be dir in google drive  
+Use resume_net, and resume_epoch to resume training, but the tensorboard event will be a new separate file.  
 - test
 ```
 % cd /content/CV_final/
