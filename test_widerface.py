@@ -104,7 +104,7 @@ if __name__ == '__main__':
     for i, img_pth in enumerate(test_dataset):
         # image_path = testset_folder + img_name
         img_raw = cv2.imread(img_pth, cv2.IMREAD_COLOR)
-        img_name = img_pth.replace("../face_detection/CV_dataset/val/images/", "").replace(".jpg", "")
+        img_name = img_pth.replace("../face_detection/CV_dataset/{}/images/".format(args.mode), "").replace(".jpg", "")
         img = np.float32(img_raw)
 
         # testing scale
