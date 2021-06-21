@@ -12,7 +12,8 @@ import time
 import datetime
 import math
 from models.retinaface import RetinaFace
-from tensorboardX import SummaryWriter
+import numpy as np 
+import pandas as pd
 
 parser = argparse.ArgumentParser(description='Retinaface Training')
 parser.add_argument('--training_dataset', default='../../../face_detection/CV_dataset/train/label.txt', help='Training dataset directory')
@@ -26,17 +27,16 @@ parser.add_argument('--resume_epoch', default=0, type=int, help='resume iter for
 parser.add_argument('--weight_decay', default=5e-4, type=float, help='Weight decay for SGD')
 parser.add_argument('--gamma', default=0.1, type=float, help='Gamma update for SGD')
 parser.add_argument('--save_dir', default='../gdrive/MyDrive/CV_final_output/', help='root dir for weight and runs')
-parser.add_argument('--run', default='tmp', help='run name for tensorboard writer')
+parser.add_argument('--run', default="tmp")
+parser.add_argument('--loadinfo_dir', default=None)
+
 args = parser.parse_args()
-args.save_folder = os.path.join(args.save_dir, "weights")
-args.run_folder = os.path.join(args.save_dir, "runs", args.run)
-args.run_folder = os.path.join(args.save_dir, "runs_val", args.run)
+args.save_folder = os.path.join(args.save_dir, args.run, "weights")
+args.saveinfo_pth = os.path.join(args.save_dir, args.run, "log")
 if not os.path.exists(args.save_folder):
     os.makedirs(args.save_folder)
-if not os.path.exists(args.run_folder):
-    os.makedirs(args.run_folder)
-if not os.path.exists(args.run_folder_val):
-    os.makedirs(args.run_folder_val)
+if not os.path.exists(args.saveinfo_pth):
+    os.makedirs(args.saveinfo_pth)
 cfg = None
 if args.network == "mobile0.25":
     cfg = cfg_mnet
@@ -66,8 +66,6 @@ net = RetinaFace(cfg=cfg)
 print("Printing net...")
 print(net)
 
-writer = SummaryWriter(args.run_folder)
-writer_val = SummaryWriter(args.run_folder_val)
 
 if args.resume_net is not None:
     print('Loading resume network...')
@@ -83,6 +81,15 @@ if args.resume_net is not None:
             name = k
         new_state_dict[name] = v
     net.load_state_dict(new_state_dict)
+
+# load previous training info
+if args.loadinfo_dir is not None:
+    print("Loading training info ...")
+    train_df = pd.read_csv(os.path.join(args.loadinfo_dir, "train_log.csv")) 
+    val_df = pd.read_csv(os.path.join(args.loadinfo_dir, "val_log.csv"))
+else:
+    train_df = pd.DataFrame(columns=["iteration", "train_loss_loc", "train_loss_cls", "train_loss_landm", "train_loss"])
+    val_df = pd.DataFrame(columns=["iteration", "val_loss_loc", "val_loss_cls", "val_loss_landm", "val_loss", "val_loss"])
 
 if num_gpu > 1 and gpu_train:
     net = torch.nn.DataParallel(net).cuda()
@@ -100,7 +107,7 @@ with torch.no_grad():
     priors = priorbox.forward()
     priors = priors.cuda()
 
-def train(writer):
+def train(train_df, val_df):
     net.train()
     epoch = 0 + args.resume_epoch
     print('Loading Dataset...')
@@ -117,15 +124,20 @@ def train(writer):
         start_iter = args.resume_epoch * epoch_size
     else:
         start_iter = 0
-    total_step = 0
     for iteration in range(start_iter, max_iter):
         if iteration % epoch_size == 0:
             # create batch iterator
             batch_iterator = iter(data.DataLoader(dataset, batch_size, shuffle=True, num_workers=num_workers, collate_fn=detection_collate))
+            # validation
+            val_net = net
+            val_loss_loc, val_loss_cls, val_loss_landm, val_loss = val(val_net, epoch)
+            val_df = val_df.append({"iteration": iteration, "val_loss_loc": val_loss_loc, "val_loss_cls": val_loss_cls, 
+                                    "val_loss_landm": val_loss_landm, "val_loss": val_loss}, ignore_index=True)
+            # write training info to saveinfo_path
+            train_df.to_csv(os.path.join(args.saveinfo_pth, "train_log.csv"), index=False)
+            val_df.to_csv(os.path.join(args.saveinfo_pth, "val_log.csv"), index=False)
             if (epoch % 10 == 0 and epoch > 0) or (epoch % 5 == 0 and epoch > cfg['decay1']):
                 torch.save(net.state_dict(), os.path.join(save_folder, cfg['name']+ '_epoch_' + str(epoch) + '.pth'))
-                val_net = net
-                val(writer_val, total_step, val_net)
             epoch += 1
 
         load_t0 = time.time()
@@ -151,11 +163,9 @@ def train(writer):
         batch_time = load_t1 - load_t0
         eta = int(batch_time * (max_iter - iteration))
         
-        writer.add_scalar('loss_loc', loss_l.item(), total_step)
-        writer.add_scalar('loss_cls', loss_c.item(), total_step)
-        writer.add_scalar('loss_landm', loss_landm.item(), total_step)
-        writer.add_scalar('loss', loss.item(), total_step)
-        total_step += 1
+        train_df = train_df.append({"iteration": iteration, "train_loss_loc": loss_l.item(), "train_loss_cls": loss_c.item(), 
+                                    "train_loss_landm": loss_landm.item(), "train_loss": loss.item()}, ignore_index=True)
+
         print('Epoch:{}/{} || Epochiter: {}/{} || Iter: {}/{} || Loc: {:.4f} Cla: {:.4f} Landm: {:.4f} || LR: {:.8f} || Batchtime: {:.4f} s || ETA: {}'
               .format(epoch, max_epoch, (iteration % epoch_size) + 1,
               epoch_size, iteration + 1, max_iter, loss_l.item(), loss_c.item(), loss_landm.item(), lr, batch_time, str(datetime.timedelta(seconds=eta))))
@@ -163,7 +173,7 @@ def train(writer):
     torch.save(net.state_dict(), os.path.join(save_folder, cfg['name'] + '_Final.pth'))
     # torch.save(net.state_dict(), save_folder + 'Final_Retinaface.pth')
 
-def val(writer, total_step, net):
+def val(net, epoch):
     net.eval()
     batch_iterator = iter(data.DataLoader(validation_dataset, batch_size, shuffle=False, num_workers=num_workers, collate_fn=detection_collate))
     # load val data
@@ -177,13 +187,10 @@ def val(writer, total_step, net):
     loss_l, loss_c, loss_landm = criterion(out, priors, targets)
     loss = cfg['loc_weight'] * loss_l + loss_c + loss_landm
     
-    writer.add_scalar('val_loss_loc', loss_l.item(), total_step)
-    writer.add_scalar('val_loss_cls', loss_c.item(), total_step)
-    writer.add_scalar('val_loss_landm', loss_landm.item(), total_step)
-    writer.add_scalar('val_loss', loss.item(), total_step)
-    print('Validation Epoch:{} Loc: {:.4f} Cla: {:.4f} Landm: {:.4f}'
-            .format(epochloss_l.item(), loss_c.item(), loss_landm.item()))
 
+    print('Validation Epoch:{} Loc: {:.4f} Cla: {:.4f} Landm: {:.4f}'
+            .format(epoch, loss_l.item(), loss_c.item(), loss_landm.item()))
+    return loss_l.item(), loss_c.item(), loss_landm.item(), loss.item()
 
 def adjust_learning_rate(optimizer, gamma, epoch, step_index, iteration, epoch_size):
     """Sets the learning rate
@@ -200,4 +207,4 @@ def adjust_learning_rate(optimizer, gamma, epoch, step_index, iteration, epoch_s
     return lr
 
 if __name__ == '__main__':
-    train(writer)
+    train(train_df, val_df)
