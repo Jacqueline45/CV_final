@@ -15,7 +15,8 @@ from models.retinaface import RetinaFace
 from tensorboardX import SummaryWriter
 
 parser = argparse.ArgumentParser(description='Retinaface Training')
-parser.add_argument('--training_dataset', default='../face_detection/CV_dataset/train/label.txt', help='Training dataset directory')
+parser.add_argument('--training_dataset', default='../../../face_detection/CV_dataset/train/label.txt', help='Training dataset directory')
+parser.add_argument('--val_dataset', default='../../../face_detection/CV_dataset/val/label.txt', help='Validation dataset directory')
 parser.add_argument('--network', default='mobile0.25', help='Backbone network mobile0.25 or resnet50')
 parser.add_argument('--num_workers', default=2, type=int, help='Number of workers used in dataloading')
 parser.add_argument('--lr', '--learning-rate', default=1e-3, type=float, help='initial learning rate')
@@ -24,15 +25,18 @@ parser.add_argument('--resume_net', default=None, help='resume net for retrainin
 parser.add_argument('--resume_epoch', default=0, type=int, help='resume iter for retraining')
 parser.add_argument('--weight_decay', default=5e-4, type=float, help='Weight decay for SGD')
 parser.add_argument('--gamma', default=0.1, type=float, help='Gamma update for SGD')
-parser.add_argument('--save_dir', default='../drive/MyDrive/CV_final_output/', help='root dir for weight and runs')
+parser.add_argument('--save_dir', default='../gdrive/MyDrive/CV_final_output/', help='root dir for weight and runs')
 parser.add_argument('--run', default='tmp', help='run name for tensorboard writer')
 args = parser.parse_args()
 args.save_folder = os.path.join(args.save_dir, "weights")
 args.run_folder = os.path.join(args.save_dir, "runs", args.run)
+args.run_folder = os.path.join(args.save_dir, "runs_val", args.run)
 if not os.path.exists(args.save_folder):
     os.makedirs(args.save_folder)
 if not os.path.exists(args.run_folder):
     os.makedirs(args.run_folder)
+if not os.path.exists(args.run_folder_val):
+    os.makedirs(args.run_folder_val)
 cfg = None
 if args.network == "mobile0.25":
     cfg = cfg_mnet
@@ -53,6 +57,8 @@ weight_decay = args.weight_decay
 initial_lr = args.lr
 gamma = args.gamma
 training_dataset = args.training_dataset
+val_dataset = args.val_dataset
+validation_dataset = WiderFaceDetection(val_dataset, preproc(img_dim, rgb_mean))
 save_folder = args.save_folder
 save_epoch_step = 10
 
@@ -61,6 +67,7 @@ print("Printing net...")
 print(net)
 
 writer = SummaryWriter(args.run_folder)
+writer_val = SummaryWriter(args.run_folder_val)
 
 if args.resume_net is not None:
     print('Loading resume network...')
@@ -117,6 +124,8 @@ def train(writer):
             batch_iterator = iter(data.DataLoader(dataset, batch_size, shuffle=True, num_workers=num_workers, collate_fn=detection_collate))
             if (epoch % 10 == 0 and epoch > 0) or (epoch % 5 == 0 and epoch > cfg['decay1']):
                 torch.save(net.state_dict(), os.path.join(save_folder, cfg['name']+ '_epoch_' + str(epoch) + '.pth'))
+                val_net = net
+                val(writer_val, total_step, val_net)
             epoch += 1
 
         load_t0 = time.time()
@@ -151,8 +160,29 @@ def train(writer):
               .format(epoch, max_epoch, (iteration % epoch_size) + 1,
               epoch_size, iteration + 1, max_iter, loss_l.item(), loss_c.item(), loss_landm.item(), lr, batch_time, str(datetime.timedelta(seconds=eta))))
  
-    torch.save(net.state_dict(), save_folder + cfg['name'] + '_Final.pth')
+    torch.save(net.state_dict(), os.path.join(save_folder, cfg['name'] + '_Final.pth'))
     # torch.save(net.state_dict(), save_folder + 'Final_Retinaface.pth')
+
+def val(writer, total_step, net):
+    net.eval()
+    batch_iterator = iter(data.DataLoader(validation_dataset, batch_size, shuffle=False, num_workers=num_workers, collate_fn=detection_collate))
+    # load val data
+    images, targets = next(batch_iterator)
+    images = images.cuda()
+    targets = [anno.cuda() for anno in targets]
+
+    # forward
+    with torch.no_grad():
+        out = net(images)
+    loss_l, loss_c, loss_landm = criterion(out, priors, targets)
+    loss = cfg['loc_weight'] * loss_l + loss_c + loss_landm
+    
+    writer.add_scalar('val_loss_loc', loss_l.item(), total_step)
+    writer.add_scalar('val_loss_cls', loss_c.item(), total_step)
+    writer.add_scalar('val_loss_landm', loss_landm.item(), total_step)
+    writer.add_scalar('val_loss', loss.item(), total_step)
+    print('Validation Epoch:{} Loc: {:.4f} Cla: {:.4f} Landm: {:.4f}'
+            .format(epochloss_l.item(), loss_c.item(), loss_landm.item()))
 
 
 def adjust_learning_rate(optimizer, gamma, epoch, step_index, iteration, epoch_size):
