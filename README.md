@@ -10,15 +10,18 @@ First, git clone this repo (specify -b dev), and download dataset, toolkit on co
 !gdown --id '12gyZX7DMlyPsSHtXalwB44xtkp1hu2H2' --output face_detection.zip
 !unzip face_detection.zip
 !git clone -b dev https://[GITHUB USERNAME]:[GITHUB PASSWORD]@github.com/Jacqueline45/CV_final.git
-!pip install tensorboardX
 ```
 - train
 ```
 % cd　/content/CV_final/
-!CUDA_VISIBLE_DEVICES=0 python train.py --network mobile0.25 --training_dataset [path to train/label.txt] --save_dir [root dir for weights/ and runs/] --run [run name] [--resume_net [model path]] [--resume_epoch [epoch]]
+!CUDA_VISIBLE_DEVICES=0 python train.py --network mobile0.25 --run [experiment name] --save_dir [root dir for weights, loginfo]  \
+--training_dataset [path to train/label.txt] --val_dataset [path to val/label.txt] \
+[--loadinfo_dir [path to dir that stores train_log.csv & val_log.csv]]  [--resume_net [model path]] [--resume_epoch [epoch]]
 ```
 Recommend saving weights to google drive, i.e. save_dir should be dir in google drive  
-Use resume_net, and resume_epoch to resume training, but the tensorboard event will be a new separate file.  
+Use loadinfo_dir, resume_net, and resume_epoch to resume training, but the tensorboard event will be a new separate file.  
+The log files will be saved as SAVE_DIR/RUN/log/train_log.csv and SAVE_DIR/RUN/log/val_log.csv.  
+The weights will be saved in SAVE_DIR/RUN
 - test
 ```
 % cd /content/CV_final/
@@ -32,9 +35,4 @@ mode = "test" or "val"
 !python3 evaluation.py  -p ./solution.txt -g ./ground_truth/val_gt.pkl -lm
 ```
 - Draw learning curve  
-Place the loginfo in a file name log/.  
-When executing this instruction again, there will be messages reminding you to kill past processes, just kill it by ```!kill PROCESS_NUM```.  
-```
-%load_ext tensorboard
-%tensorboard --logdir_spec log
-```
+draw by matplotlib (待補)  
