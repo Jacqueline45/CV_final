@@ -35,4 +35,15 @@ mode = "test" or "val"
 !python3 evaluation.py  -p ./solution.txt -g ./ground_truth/val_gt.pkl -lm
 ```
 - Draw learning curve  
-draw by matplotlib (待補)  
+```
+% cd /content/
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+train_df = pd.read_csv('train_log.csv')
+val_df = pd.read_csv('val_log.csv')
+train_cols = ['iteration', 'train_loss_loc', 'train_loss_cls', 'train_loss_landm','train_loss']
+val_cols = ['iteration', 'val_loss_loc', 'val_loss_cls', 'val_loss_landm', 'val_loss', 'val_loss.1']
+plt.plot(np.array(val_df['iteration']), np.array(val_df['val_loss'])) # change df (train/val) and the column name you want to draw
+plt.show()
+```
