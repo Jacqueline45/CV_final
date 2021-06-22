@@ -146,3 +146,13 @@ class squeezenet1_1_small(nn.Module):
     out = self.features(x)
     return out
 
+class mbnetv3_trim(nn.Module):
+  def __init__(self):
+    super(mbnetv3_trim, self).__init__()
+    import torchvision.models as models
+    reference = models.mobilenet_v3_small()
+    self.features = reference.features
+  
+  def forward(self, x):
+    out = self.features(x)
+    return out
