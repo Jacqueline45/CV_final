@@ -6,6 +6,7 @@ import torch.nn.functional as F
 from collections import OrderedDict
 
 from models.net import MobileNetV1 as MobileNetV1
+from models.net import squeezenet1_1_small
 from models.net import FPN as FPN
 from models.net import SSH as SSH
 
@@ -68,8 +69,26 @@ class RetinaFace(nn.Module):
         elif cfg['name'] == 'Resnet50':
             import torchvision.models as models
             backbone = models.resnet50(pretrained=cfg['pretrain'])
+        elif cfg['name'] == 'squeezenet1_1_small':
+          backbone = squeezenet1_1_small()
+          if cfg['pretrain']:
+            import torchvision.models as models
+            reference = models.squeezenet1_1(pretrained=True)
+            model_dict = backbone.state_dict()
+            # filter out unnecessary keys
+            pretrained_dict = {k: v for k, v in reference.state_dict().items() if k in model_dict}
+            print("matching layers num:", len(pretrained_dict))
+            # overwrite entries in the existing state dict
+            model_dict.update(pretrained_dict) 
+            # 3. load the new state dict
+            backbone.load_state_dict(pretrained_dict)
 
-        self.body = _utils.IntermediateLayerGetter(backbone, cfg['return_layers'])
+
+
+        if cfg['name'] == 'squeezenet1_1_small':
+          self.body = _utils.IntermediateLayerGetter(backbone.features, cfg['return_layers'])
+        else:
+          self.body = _utils.IntermediateLayerGetter(backbone, cfg['return_layers'])
         in_channels_stage2 = cfg['in_channel']
         in_channels_list = [
             in_channels_stage2 * 2,

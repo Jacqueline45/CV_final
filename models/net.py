@@ -81,7 +81,7 @@ class FPN(nn.Module):
     def forward(self, input):
         # names = list(input.keys())
         input = list(input.values())
-
+        
         output1 = self.output1(input[0])
         output2 = self.output2(input[1])
         output3 = self.output3(input[2])
@@ -134,4 +134,15 @@ class MobileNetV1(nn.Module):
         x = x.view(-1, 256)
         x = self.fc(x)
         return x
+
+class squeezenet1_1_small(nn.Module):
+  def __init__(self):
+    super(squeezenet1_1_small, self).__init__()
+    import torchvision.models as models
+    reference = models.squeezenet1_1()
+    self.features = reference.features
+  
+  def forward(self, x):
+    out = self.features(x)
+    return out
 
