@@ -19,10 +19,8 @@ class PriorBox(object):
             self.stepsy = [self.image_size[0]/feature_map_size[0] for feature_map_size in self.feature_maps]
             self.stepsx = [self.image_size[1]/feature_map_size[1] for feature_map_size in self.feature_maps]
         else:
-            self.feature_maps = [[ceil(self.image_size[0]/step), ceil(self.image_size[1]/step)] for step in self.stepsx]
-
-          self.feature_maps = cfg['feature_maps']
-          
+            self.feature_maps = [[ceil(self.image_size[0]/step), ceil(self.image_size[1]/step)] for step in self.stepsx]      
+  
         self.name = "s"
 
     def forward(self):
