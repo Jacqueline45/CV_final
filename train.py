@@ -5,7 +5,7 @@ import torch.optim as optim
 import torch.backends.cudnn as cudnn
 import argparse
 import torch.utils.data as data
-from data import WiderFaceDetection, detection_collate, preproc, cfg_mnet, cfg_re50
+from data import WiderFaceDetection, detection_collate, preproc, cfg_mnet, cfg_re50, cfg_snet
 from layers.modules import MultiBoxLoss
 from layers.functions.prior_box import PriorBox
 import time
@@ -18,7 +18,7 @@ import pandas as pd
 parser = argparse.ArgumentParser(description='Retinaface Training')
 parser.add_argument('--training_dataset', default='../../../face_detection/CV_dataset/train/label.txt', help='Training dataset directory')
 parser.add_argument('--val_dataset', default='../../../face_detection/CV_dataset/val/label.txt', help='Validation dataset directory')
-parser.add_argument('--network', default='mobile0.25', help='Backbone network mobile0.25 or resnet50')
+parser.add_argument('--network', default='mobile0.25', help='Backbone network mobile0.25 or resnet50 or squeezenet1_1_small')
 parser.add_argument('--num_workers', default=2, type=int, help='Number of workers used in dataloading')
 parser.add_argument('--lr', '--learning-rate', default=1e-3, type=float, help='initial learning rate')
 parser.add_argument('--momentum', default=0.9, type=float, help='momentum')
@@ -42,6 +42,8 @@ if args.network == "mobile0.25":
     cfg = cfg_mnet
 elif args.network == "resnet50":
     cfg = cfg_re50
+elif args.network == "squeezenet1_1_small":
+    cfg = cfg_snet
 
 rgb_mean = (104, 117, 123) # bgr order
 num_classes = 2
