@@ -8,14 +8,16 @@ class PriorBox(object):
     def __init__(self, cfg, image_size=None, phase='train'):
         super(PriorBox, self).__init__()
         self.min_sizes = cfg['min_sizes']
-        self.steps = cfg['steps']
+        self.stepsx = cfg['steps']
+        self.stepsy = cfg['steps']
         self.clip = cfg['clip']
         self.image_size = image_size
         if cfg['name'] == "squeezenet1_1_small":
             self.feature_maps = [[floor(floor(self.image_size[0]/2-0.5)/2-0.5), floor(floor(self.image_size[1]/2-0.5)/2-0.5)]]
             for i in range(2):
                 self.feature_maps.append([floor(self.feature_maps[i][0]/2-0.5), floor(self.feature_maps[i][1]/2-0.5)])
-            self.steps = [self.image_size[0]/feature_map_size[0] for feature_map_size in self.feature_maps]
+            self.stepsy = [self.image_size[0]/feature_map_size[0] for feature_map_size in self.feature_maps]
+            self.stepsx = [self.image_size[1]/feature_map_size[1] for feature_map_size in self.feature_maps]
         else:
             self.feature_maps = [[ceil(self.image_size[0]/step), ceil(self.image_size[1]/step)] for step in self.steps]
 
@@ -31,8 +33,8 @@ class PriorBox(object):
                 for min_size in min_sizes:
                     s_kx = min_size / self.image_size[1]
                     s_ky = min_size / self.image_size[0]
-                    dense_cx = [x * self.steps[k] / self.image_size[1] for x in [j + 0.5]]
-                    dense_cy = [y * self.steps[k] / self.image_size[0] for y in [i + 0.5]]
+                    dense_cx = [x * self.stepsx[k] / self.image_size[1] for x in [j + 0.5]]
+                    dense_cy = [y * self.stepsy[k] / self.image_size[0] for y in [i + 0.5]]
                     for cy, cx in product(dense_cy, dense_cx):
                         anchors += [cx, cy, s_kx, s_ky]
     
