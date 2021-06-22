@@ -29,8 +29,10 @@ parser.add_argument('--gamma', default=0.1, type=float, help='Gamma update for S
 parser.add_argument('--save_dir', default='../gdrive/MyDrive/CV_final_output/', help='root dir for weight and runs')
 parser.add_argument('--run', default="tmp")
 parser.add_argument('--loadinfo_dir', default=None)
+parser.add_argument('--optim', default="SGD", help="SGD or Adam")
 
 args = parser.parse_args()
+print(args)
 args.save_folder = os.path.join(args.save_dir, args.run, "weights")
 args.saveinfo_pth = os.path.join(args.save_dir, args.run, "log")
 if not os.path.exists(args.save_folder):
@@ -100,8 +102,10 @@ else:
 
 cudnn.benchmark = True
 
-
-optimizer = optim.SGD(net.parameters(), lr=initial_lr, momentum=momentum, weight_decay=weight_decay)
+if args.optim == "SGD":
+  optimizer = optim.SGD(net.parameters(), lr=initial_lr, momentum=momentum, weight_decay=weight_decay)
+elif args.optim == "Adam":
+  optimizer = optim.Adam(net.parameters(), lr=initial_lr, betas=(0.9, 0.999), eps=1e-08, weight_decay=weight_decay)
 criterion = MultiBoxLoss(num_classes, 0.35, True, 0, True, 7, 0.35, False)
 
 priorbox = PriorBox(cfg, image_size=(img_dim, img_dim))
