@@ -1,7 +1,7 @@
 import torch
 from itertools import product as product
 import numpy as np
-from math import ceil
+from math import ceil, floor
 
 
 class PriorBox(object):
@@ -11,11 +11,16 @@ class PriorBox(object):
         self.steps = cfg['steps']
         self.clip = cfg['clip']
         self.image_size = image_size
-        if self.steps is not None:
-          self.feature_maps = [[ceil(self.image_size[0]/step), ceil(self.image_size[1]/step)] for step in self.steps]
+        if cfg['name'] == "squeezenet1_1_small":
+            self.feature_maps = [[floor(floor(self.image_size[0]/2-0.5)/2-0.5), floor(floor(self.image_size[1]/2-0.5)/2-0.5)]]
+            for i in range(2):
+                self.feature_maps.append([floor(self.feature_maps[i][0]/2-0.5), floor(self.feature_maps[i][1]/2-0.5)])
+            self.steps = [self.image_size[0]/feature_map_size[0] for feature_map_size in self.feature_maps]
         else:
+            self.feature_maps = [[ceil(self.image_size[0]/step), ceil(self.image_size[1]/step)] for step in self.steps]
+
           self.feature_maps = cfg['feature_maps']
-          self.steps = [self.image_size[0]/feature_map_size[0] for feature_map_size in self.feature_maps]
+          
         self.name = "s"
 
     def forward(self):
