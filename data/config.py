@@ -43,7 +43,8 @@ cfg_re50 = {
 cfg_snet = {
     'name': 'squeezenet1_1_small',
     'min_sizes': [[16, 32], [64, 128], [256, 512]],
-    'steps': [8, 16, 32],
+    'steps': None,
+    'feature_maps': [[159, 159], [79, 79], [39, 39]],
     'variance': [0.1, 0.2],
     'clip': False,
     'loc_weight': 2.0,

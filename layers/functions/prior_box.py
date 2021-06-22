@@ -11,7 +11,11 @@ class PriorBox(object):
         self.steps = cfg['steps']
         self.clip = cfg['clip']
         self.image_size = image_size
-        self.feature_maps = [[ceil(self.image_size[0]/step), ceil(self.image_size[1]/step)] for step in self.steps]
+        if self.steps is not None:
+          self.feature_maps = [[ceil(self.image_size[0]/step), ceil(self.image_size[1]/step)] for step in self.steps]
+        else:
+          self.feature_maps = cfg['feature_maps']
+          self.steps = [self.image_size[0]/feature_map_size[0] for feature_map_size in self.feature_maps]
         self.name = "s"
 
     def forward(self):
@@ -26,6 +30,7 @@ class PriorBox(object):
                     dense_cy = [y * self.steps[k] / self.image_size[0] for y in [i + 0.5]]
                     for cy, cx in product(dense_cy, dense_cx):
                         anchors += [cx, cy, s_kx, s_ky]
+    
 
         # back to torch land
         output = torch.Tensor(anchors).view(-1, 4)
