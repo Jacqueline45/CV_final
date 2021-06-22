@@ -60,4 +60,23 @@ cfg_snet = {
     'in_channel': 64,
     'out_channel': 100
 }
+cfg_mbnetv3 = {
+    'name': 'mbnetv3',
+    'min_sizes': [[16, 32], [64, 128], [256, 512]],
+    'steps': [8, 16, 32],
+    'variance': [0.1, 0.2],
+    'clip': False,
+    'loc_weight': 2.0,
+    'gpu_train': True,
+    'batch_size': 32,
+    'ngpu': 1,
+    'epoch': 250,
+    'decay1': 190,
+    'decay2': 220,
+    'image_size': 640,
+    'pretrain': True,
+    'return_layers': {'3': 1, '6': 2, '9': 3},
+    'in_channel': 20,
+    'out_channel': 128
+}
 

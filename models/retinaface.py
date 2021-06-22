@@ -7,6 +7,7 @@ from collections import OrderedDict
 
 from models.net import MobileNetV1 as MobileNetV1
 from models.net import squeezenet1_1_small
+from models.net import mbnetv3_trim
 from models.net import FPN as FPN
 from models.net import SSH as SSH
 
@@ -82,19 +83,33 @@ class RetinaFace(nn.Module):
             model_dict.update(pretrained_dict) 
             # 3. load the new state dict
             backbone.load_state_dict(pretrained_dict)
+        elif cfg['name'] == "mbnetv3":
+          backbone = mbnetv3_trim()
+          if cfg['pretrain']:
+            import torchvision.models as models
+            reference = models.mobilenet_v3_small(pretrained=True)
+            model_dict = backbone.state_dict()
+            pretrained_dict = {k: v for k, v in reference.state_dict().items() if k in model_dict}
+            print("matching layers num:", len(pretrained_dict))
+            model_dict.update(pretrained_dict) 
+            backbone.load_state_dict(pretrained_dict)
 
-
-
-        if cfg['name'] == 'squeezenet1_1_small':
+        if cfg['name'] == 'squeezenet1_1_small' or cfg['name'] == "mbnetv3":
           self.body = _utils.IntermediateLayerGetter(backbone.features, cfg['return_layers'])
         else:
           self.body = _utils.IntermediateLayerGetter(backbone, cfg['return_layers'])
         in_channels_stage2 = cfg['in_channel']
-        in_channels_list = [
-            in_channels_stage2 * 2,
-            in_channels_stage2 * 4,
-            in_channels_stage2 * 8,
-        ]
+        
+        if cfg['name'] is 'mbnetv3':
+          in_channels_list = [
+              24, 40, 96
+          ]
+        else:
+          in_channels_list = [
+              in_channels_stage2 * 2,
+              in_channels_stage2 * 4,
+              in_channels_stage2 * 8,
+          ]
         out_channels = cfg['out_channel']
         self.fpn = FPN(in_channels_list,out_channels)
         self.ssh1 = SSH(out_channels, out_channels)
