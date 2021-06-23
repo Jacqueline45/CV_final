@@ -8,6 +8,7 @@ from collections import OrderedDict
 from models.net import MobileNetV1 as MobileNetV1
 from models.net import squeezenet1_1_small
 from models.net import mbnetv3_trim
+from models.net import MobileNetV1_0_5
 from models.net import FPN as FPN
 from models.net import SSH as SSH
 
@@ -93,6 +94,8 @@ class RetinaFace(nn.Module):
             print("matching layers num:", len(pretrained_dict))
             model_dict.update(pretrained_dict) 
             backbone.load_state_dict(pretrained_dict)
+        elif cfg['name'] == 'mbnetv10.5':
+            backbone = MobileNetV1_0_5()
 
         if cfg['name'] == 'squeezenet1_1_small' or cfg['name'] == "mbnetv3":
           self.body = _utils.IntermediateLayerGetter(backbone.features, cfg['return_layers'])
