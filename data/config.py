@@ -99,3 +99,23 @@ cfg_mnet_0_5 = {
     'in_channel': 64,
     'out_channel': 64
 }
+
+cfg_mnetv2 = {
+    'name': 'mbnetv2',
+    'min_sizes': [[16, 26], [43, 70], [115, 190], [312, 512]],
+    'steps': [4, 8, 16, 32],
+    'variance': [0.1, 0.2],
+    'clip': False,
+    'loc_weight': 2.0,
+    'gpu_train': True,
+    'batch_size': 32,
+    'ngpu': 1,
+    'epoch': 250,
+    'decay1': 190,
+    'decay2': 220,
+    'image_size': 640,
+    'pretrain': False,
+    'return_layers': {'2': 1, '4': 2, '7': 3, '14': 4},
+    'in_channel': 12,
+    'out_channel': 64
+}

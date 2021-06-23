@@ -10,6 +10,7 @@ from models.net import squeezenet1_1_small
 from models.net import mbnetv3_trim
 from models.net import MobileNetV1_0_5
 from models.net import FPN as FPN
+from models.net import FPN4
 from models.net import SSH as SSH
 
 
@@ -157,6 +158,78 @@ class RetinaFace(nn.Module):
         classifications = torch.cat([self.ClassHead[i](feature) for i, feature in enumerate(features)],dim=1)
         ldm_regressions = torch.cat([self.LandmarkHead[i](feature) for i, feature in enumerate(features)], dim=1)
 
+        if self.phase == 'train':
+            output = (bbox_regressions, classifications, ldm_regressions)
+        else:
+            output = (bbox_regressions, F.softmax(classifications, dim=-1), ldm_regressions)
+        return output
+
+class RetinaFace_4feat(nn.Module):
+    def __init__(self, cfg = None, phase = 'train'):
+        """
+        :param cfg:  Network related settings.
+        :param phase: train or test.
+        """
+        super(RetinaFace_4feat,self).__init__()
+        self.phase = phase
+        backbone = None
+        if cfg['name'] == 'mbnetv2':
+            import torchvision.models as models
+            backbone = models.mobilenet_v2(pretrained=True)
+
+        if cfg['name'] == 'mbnetv2':
+          self.body = _utils.IntermediateLayerGetter(backbone.features, cfg['return_layers'])
+        else:
+          self.body = _utils.IntermediateLayerGetter(backbone, cfg['return_layers'])
+        
+        in_channels_stage2 = cfg['in_channel']
+        
+        if cfg['name'] == "mbnetv2":
+          in_channels_list = [24, 32, 64, 160]
+
+        out_channels = cfg['out_channel']
+        self.fpn = FPN4(in_channels_list,out_channels)
+        self.ssh1 = SSH(out_channels, out_channels)
+        self.ssh2 = SSH(out_channels, out_channels)
+        self.ssh3 = SSH(out_channels, out_channels)
+        self.ssh4 = SSH(out_channels, out_channels)
+
+        self.ClassHead = self._make_class_head(fpn_num=4, inchannels=cfg['out_channel'])
+        self.BboxHead = self._make_bbox_head(fpn_num=4, inchannels=cfg['out_channel'])
+        self.LandmarkHead = self._make_landmark_head(fpn_num=4, inchannels=cfg['out_channel'])
+
+    def _make_class_head(self,fpn_num=3,inchannels=64,anchor_num=2):
+        classhead = nn.ModuleList()
+        for i in range(fpn_num):
+            classhead.append(ClassHead(inchannels,anchor_num))
+        return classhead
+    
+    def _make_bbox_head(self,fpn_num=3,inchannels=64,anchor_num=2):
+        bboxhead = nn.ModuleList()
+        for i in range(fpn_num):
+            bboxhead.append(BboxHead(inchannels,anchor_num))
+        return bboxhead
+
+    def _make_landmark_head(self,fpn_num=3,inchannels=64,anchor_num=2):
+        landmarkhead = nn.ModuleList()
+        for i in range(fpn_num):
+            landmarkhead.append(LandmarkHead(inchannels,anchor_num))
+        return landmarkhead
+
+    def forward(self,inputs):
+        out = self.body(inputs)
+        # FPN
+        fpn = self.fpn(out)
+        # SSH
+        feature1 = self.ssh1(fpn[0])
+        feature2 = self.ssh2(fpn[1])
+        feature3 = self.ssh3(fpn[2])
+        feature4 = self.ssh4(fpn[3])
+        features = [feature1, feature2, feature3, feature4]
+
+        bbox_regressions = torch.cat([self.BboxHead[i](feature) for i, feature in enumerate(features)], dim=1)
+        classifications = torch.cat([self.ClassHead[i](feature) for i, feature in enumerate(features)],dim=1)
+        ldm_regressions = torch.cat([self.LandmarkHead[i](feature) for i, feature in enumerate(features)], dim=1)
         if self.phase == 'train':
             output = (bbox_regressions, classifications, ldm_regressions)
         else:

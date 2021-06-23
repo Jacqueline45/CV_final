@@ -5,20 +5,20 @@ import torch.optim as optim
 import torch.backends.cudnn as cudnn
 import argparse
 import torch.utils.data as data
-from data import WiderFaceDetection, detection_collate, preproc, cfg_mnet, cfg_re50, cfg_snet, cfg_mbnetv3, cfg_mnet_0_5
+from data import WiderFaceDetection, detection_collate, preproc, cfg_mnet, cfg_re50, cfg_snet, cfg_mbnetv3, cfg_mnet_0_5, cfg_mnetv2
 from layers.modules import MultiBoxLoss
 from layers.functions.prior_box import PriorBox
 import time
 import datetime
 import math
-from models.retinaface import RetinaFace
+from models.retinaface import RetinaFace, Retinaface_4feat
 import numpy as np 
 import pandas as pd
 
 parser = argparse.ArgumentParser(description='Retinaface Training')
 parser.add_argument('--training_dataset', default='../../../face_detection/CV_dataset/train/label.txt', help='Training dataset directory')
 parser.add_argument('--val_dataset', default='../../../face_detection/CV_dataset/val/label.txt', help='Validation dataset directory')
-parser.add_argument('--network', default='mobile0.25', help='Backbone network mobile0.25 or resnet50 or squeezenet1_1_small or mbnetv3 or mbnetv10.5')
+parser.add_argument('--network', default='mobile0.25', help='Backbone network mobile0.25 or resnet50 or squeezenet1_1_small or mbnetv3 or mbnetv10.5 or mnetv2')
 parser.add_argument('--num_workers', default=2, type=int, help='Number of workers used in dataloading')
 parser.add_argument('--lr', '--learning-rate', default=1e-3, type=float, help='initial learning rate')
 parser.add_argument('--momentum', default=0.9, type=float, help='momentum')
@@ -50,6 +50,8 @@ elif args.network == "mbnetv3":
     cfg = cfg_mbnetv3
 elif args.network ==  "mbnetv10.5":
     cfg = cfg_mnet_0_5
+elif args.network ==  "mbnetv2":
+    cfg = cfg_mnetv2
 
 rgb_mean = (104, 117, 123) # bgr order
 num_classes = 2
@@ -70,7 +72,10 @@ validation_dataset = WiderFaceDetection(val_dataset, preproc(img_dim, rgb_mean))
 save_folder = args.save_folder
 save_epoch_step = 10
 
-net = RetinaFace(cfg=cfg)
+if args.network == "mbnetv2":
+    net = Retinaface_4feat(cfg=cfg)
+else:
+    net = RetinaFace(cfg=cfg)
 print("Printing net...")
 print(net)
 
