@@ -11,7 +11,7 @@ from layers.functions.prior_box import PriorBox
 import time
 import datetime
 import math
-from models.retinaface import RetinaFace, Retinaface_4feat
+from models.retinaface import RetinaFace, RetinaFace_4feat
 import numpy as np 
 import pandas as pd
 
@@ -73,7 +73,7 @@ save_folder = args.save_folder
 save_epoch_step = 10
 
 if args.network == "mbnetv2":
-    net = Retinaface_4feat(cfg=cfg)
+    net = RetinaFace_4feat(cfg=cfg)
 else:
     net = RetinaFace(cfg=cfg)
 print("Printing net...")
