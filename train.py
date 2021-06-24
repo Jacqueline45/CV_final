@@ -151,7 +151,7 @@ def train(train_df, val_df):
             # write training info to saveinfo_path
             train_df.to_csv(os.path.join(args.saveinfo_pth, "train_log.csv"), index=False)
             val_df.to_csv(os.path.join(args.saveinfo_pth, "val_log.csv"), index=False)
-            if (epoch % 10 == 0 and epoch > 0) or (epoch % 5 == 0 and epoch > cfg['decay1']):
+            if (epoch % 5 == 0 and epoch > 0) or (epoch % 5 == 0 and epoch > cfg['decay1']):
                 torch.save(net.state_dict(), os.path.join(save_folder, cfg['name']+ '_epoch_' + str(epoch) + '.pth'))
             epoch += 1
 
