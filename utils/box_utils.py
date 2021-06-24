@@ -327,7 +327,7 @@ def nms(boxes, scores, overlap=0.5, top_k=200):
         idx = idx[IoU.le(overlap)]
     return keep, count
 
-def Diou(bboxes1, bboxes2):
+def Diou(bboxes1, bboxes2, phase):
     rows = bboxes1.shape[0]
     cols = bboxes2.shape[0]
     dious = torch.zeros((rows, cols))
@@ -339,7 +339,28 @@ def Diou(bboxes1, bboxes2):
         dious = torch.zeros((cols, rows))
         exchange = True
     # #xmin,ymin,xmax,ymax->[:,0],[:,1],[:,2],[:,3]
-    with torch.no_grad():
+
+    if phase == 'val':
+      with torch.no_grad():
+        w1 = bboxes1[:, 2] - bboxes1[:, 0]
+        h1 = bboxes1[:, 3] - bboxes1[:, 1] 
+        w2 = bboxes2[:, 2] - bboxes2[:, 0]
+        h2 = bboxes2[:, 3] - bboxes2[:, 1]
+      
+        area1 = w1 * h1
+        area2 = w2 * h2
+
+        center_x1 = (bboxes1[:, 2] + bboxes1[:, 0]) / 2 
+        center_y1 = (bboxes1[:, 3] + bboxes1[:, 1]) / 2 
+        center_x2 = (bboxes2[:, 2] + bboxes2[:, 0]) / 2
+        center_y2 = (bboxes2[:, 3] + bboxes2[:, 1]) / 2
+
+        inter_max_xy = torch.min(bboxes1[:, 2:],bboxes2[:, 2:])
+        inter_min_xy = torch.max(bboxes1[:, :2],bboxes2[:, :2])
+        out_max_xy = torch.max(bboxes1[:, 2:],bboxes2[:, 2:])
+        out_min_xy = torch.min(bboxes1[:, :2],bboxes2[:, :2])
+
+    else:
       w1 = bboxes1[:, 2] - bboxes1[:, 0]
       h1 = bboxes1[:, 3] - bboxes1[:, 1] 
       w2 = bboxes2[:, 2] - bboxes2[:, 0]
@@ -353,10 +374,11 @@ def Diou(bboxes1, bboxes2):
       center_x2 = (bboxes2[:, 2] + bboxes2[:, 0]) / 2
       center_y2 = (bboxes2[:, 3] + bboxes2[:, 1]) / 2
 
-      inter_max_xy = torch.min(bboxes1[:, 2:],bboxes2[:, 2:]) 
-      inter_min_xy = torch.max(bboxes1[:, :2],bboxes2[:, :2]) 
-      out_max_xy = torch.max(bboxes1[:, 2:],bboxes2[:, 2:]) 
+      inter_max_xy = torch.min(bboxes1[:, 2:],bboxes2[:, 2:])
+      inter_min_xy = torch.max(bboxes1[:, :2],bboxes2[:, :2])
+      out_max_xy = torch.max(bboxes1[:, 2:],bboxes2[:, 2:])
       out_min_xy = torch.min(bboxes1[:, :2],bboxes2[:, :2])
+
 
     inter = torch.clamp((inter_max_xy - inter_min_xy), min=0)
     inter_area = inter[:, 0] * inter[:, 1]
@@ -364,14 +386,14 @@ def Diou(bboxes1, bboxes2):
     outer = torch.clamp((out_max_xy - out_min_xy), min=0)
     outer_diag = (outer[:, 0] ** 2) + (outer[:, 1] ** 2)
     union = area1+area2-inter_area
-    dious = inter_area / union - (inter_diag) / outer_diag
+    dious = inter_area / (union + 1e-6) - (inter_diag) / (outer_diag + 1e-6)
     dious = torch.clamp(dious,min=-1.0,max = 1.0)
     if exchange:
         dious = dious.T
 
-    return len(dious) - torch.sum(dious)
+    return torch.sum(1.0 - dious)
 
-def Ciou(bboxes1, bboxes2):
+def Ciou(bboxes1, bboxes2, phase):
     rows = bboxes1.shape[0]
     cols = bboxes2.shape[0]
     cious = torch.zeros((rows, cols))
@@ -383,7 +405,21 @@ def Ciou(bboxes1, bboxes2):
         cious = torch.zeros((cols, rows))
         exchange = True
 
-    with torch.no_grad():
+    if phase == 'val':
+      with torch.no_grad():
+        w1 = bboxes1[:, 2] - bboxes1[:, 0]
+        h1 = bboxes1[:, 3] - bboxes1[:, 1]
+        w2 = bboxes2[:, 2] - bboxes2[:, 0]
+        h2 = bboxes2[:, 3] - bboxes2[:, 1]
+
+        area1 = w1 * h1
+        area2 = w2 * h2
+
+        center_x1 = (bboxes1[:, 2] + bboxes1[:, 0]) / 2
+        center_y1 = (bboxes1[:, 3] + bboxes1[:, 1]) / 2
+        center_x2 = (bboxes2[:, 2] + bboxes2[:, 0]) / 2
+        center_y2 = (bboxes2[:, 3] + bboxes2[:, 1]) / 2
+    else:
       w1 = bboxes1[:, 2] - bboxes1[:, 0]
       h1 = bboxes1[:, 3] - bboxes1[:, 1]
       w2 = bboxes2[:, 2] - bboxes2[:, 0]
@@ -396,11 +432,11 @@ def Ciou(bboxes1, bboxes2):
       center_y1 = (bboxes1[:, 3] + bboxes1[:, 1]) / 2
       center_x2 = (bboxes2[:, 2] + bboxes2[:, 0]) / 2
       center_y2 = (bboxes2[:, 3] + bboxes2[:, 1]) / 2
-
-      inter_max_xy = torch.min(bboxes1[:, 2:],bboxes2[:, 2:])
-      inter_min_xy = torch.max(bboxes1[:, :2],bboxes2[:, :2])
-      out_max_xy = torch.max(bboxes1[:, 2:],bboxes2[:, 2:])
-      out_min_xy = torch.min(bboxes1[:, :2],bboxes2[:, :2])
+      
+    inter_max_xy = torch.min(bboxes1[:, 2:],bboxes2[:, 2:])
+    inter_min_xy = torch.max(bboxes1[:, :2],bboxes2[:, :2])
+    out_max_xy = torch.max(bboxes1[:, 2:],bboxes2[:, 2:])
+    out_min_xy = torch.min(bboxes1[:, :2],bboxes2[:, :2])
 
     inter = torch.clamp((inter_max_xy - inter_min_xy), min=0)
     inter_area = inter[:, 0] * inter[:, 1]
@@ -408,18 +444,18 @@ def Ciou(bboxes1, bboxes2):
     outer = torch.clamp((out_max_xy - out_min_xy), min=0)
     outer_diag = (outer[:, 0] ** 2) + (outer[:, 1] ** 2)
     union = area1+area2-inter_area
-    u = (inter_diag) / outer_diag
-    iou = inter_area / union
+    u = (inter_diag) / (outer_diag + 1e-6)
+    iou = inter_area / (union + 1e-6)
     with torch.no_grad():
-        arctan = torch.atan(w2 / h2) - torch.atan(w1 / h1)
-        v = (4 / (math.pi ** 2)) * torch.pow((torch.atan(w2 / h2) - torch.atan(w1 / h1)), 2)
+        arctan = torch.atan(w2 / (h2 + 1e-6)) - torch.atan(w1 / (h1 + 1e-6))
+        v = (4 / (math.pi ** 2)) * torch.pow((torch.atan(w2 / (h2 + 1e-6)) - torch.atan(w1 / (h1 + 1e-6))), 2)
         S = 1 - iou
-        alpha = v / (S + v)
+        alpha = v / (S + v + 1e-6)
         w_temp = 2 * w1
     ar = (8 / (math.pi ** 2)) * arctan * ((w1 - w_temp) * h1)
     cious = iou - (u + alpha * ar)
     cious = torch.clamp(cious,min=-1.0,max = 1.0)
     if exchange:
         cious = cious.T
-    return len(cious) - torch.sum(cious)
+    return torch.sum(1.0 - cious)
 
