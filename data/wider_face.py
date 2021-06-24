@@ -34,6 +34,7 @@ class WiderFaceDetection(data.Dataset):
                 labels.append(label)
 
         self.words.append(labels)
+        self.aug = aug
         self.seq = iaa.Sequential([
                             iaa.SomeOf((0, 5),
                             [
@@ -105,7 +106,7 @@ class WiderFaceDetection(data.Dataset):
         target = np.array(annotations)
         if self.preproc is not None:
             if self.aug:
-                img = self.seq(img)
+                img = self.seq(images=np.expand_dims(img, axis=0)).squeeze(axis=0)
             img, target = self.preproc(img, target)
 
         return torch.from_numpy(img), target
