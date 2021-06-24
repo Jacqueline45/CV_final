@@ -31,6 +31,7 @@ parser.add_argument('--run', default="tmp")
 parser.add_argument('--loadinfo_dir', default=None)
 parser.add_argument('--optim', default="SGD", help="SGD or Adam")
 parser.add_argument('--type_loc', default="L1", help="L1 or Diou")
+parser.add_argument('--aug', default=False, action='store_true')
 
 args = parser.parse_args()
 print(args)
