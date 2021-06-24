@@ -15,6 +15,16 @@ from models.retinaface import RetinaFace, RetinaFace_4feat
 import numpy as np 
 import pandas as pd
 
+def str2bool(v):
+    if isinstance(v, bool):
+        return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
 parser = argparse.ArgumentParser(description='Retinaface Training')
 parser.add_argument('--training_dataset', default='../../../face_detection/CV_dataset/train/label.txt', help='Training dataset directory')
 parser.add_argument('--val_dataset', default='../../../face_detection/CV_dataset/val/label.txt', help='Validation dataset directory')
@@ -31,7 +41,7 @@ parser.add_argument('--run', default="tmp")
 parser.add_argument('--loadinfo_dir', default=None)
 parser.add_argument('--optim', default="SGD", help="SGD or Adam")
 parser.add_argument('--type_loc', default="L1", help="L1 or Diou")
-parser.add_argument('--aug', default=False, action='store_true')
+parser.add_argument('--aug', default=False, type=str2bool)
 
 args = parser.parse_args()
 print(args)
