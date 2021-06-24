@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
-from utils.box_utils import match, log_sum_exp
+from utils.box_utils import match, log_sum_exp, Diou
 from data import cfg_mnet
 GPU = cfg_mnet['gpu_train']
 
@@ -29,7 +29,7 @@ class MultiBoxLoss(nn.Module):
         See: https://arxiv.org/pdf/1512.02325.pdf for more details.
     """
 
-    def __init__(self, num_classes, overlap_thresh, prior_for_matching, bkg_label, neg_mining, neg_pos, neg_overlap, encode_target):
+    def __init__(self, num_classes, overlap_thresh, prior_for_matching, bkg_label, neg_mining, neg_pos, neg_overlap, encode_target, type_loc="L1"): # type = "L1" or"Diou" for location loss 
         super(MultiBoxLoss, self).__init__()
         self.num_classes = num_classes
         self.threshold = overlap_thresh
@@ -40,6 +40,7 @@ class MultiBoxLoss(nn.Module):
         self.negpos_ratio = neg_pos
         self.neg_overlap = neg_overlap
         self.variance = [0.1, 0.2]
+        self.type_loc = type_loc
 
     def forward(self, predictions, priors, targets):
         """Multibox Loss
@@ -94,7 +95,10 @@ class MultiBoxLoss(nn.Module):
         pos_idx = pos.unsqueeze(pos.dim()).expand_as(loc_data)
         loc_p = loc_data[pos_idx].view(-1, 4)
         loc_t = loc_t[pos_idx].view(-1, 4)
-        loss_l = F.smooth_l1_loss(loc_p, loc_t, reduction='sum')
+        if self.type_loc == "L1":
+            loss_l = F.smooth_l1_loss(loc_p, loc_t, reduction='sum')
+        elif self.type_loc == "Diou":
+            loss_1 = Diou(loc_p, loc_t)
 
         # Compute max conf across batch for hard negative mining
         batch_conf = conf_data.view(-1, self.num_classes)
