@@ -42,7 +42,7 @@ class MultiBoxLoss(nn.Module):
         self.variance = [0.1, 0.2]
         self.type_loc = type_loc
 
-    def forward(self, predictions, priors, targets):
+    def forward(self, predictions, priors, targets, phase='train'):
         """Multibox Loss
         Args:
             predictions (tuple): A tuple containing loc preds, conf preds,
@@ -98,9 +98,9 @@ class MultiBoxLoss(nn.Module):
         if self.type_loc == "L1":
             loss_l = F.smooth_l1_loss(loc_p, loc_t, reduction='sum')
         elif self.type_loc == "Diou":
-            loss_l = Diou(loc_p, loc_t)
+            loss_l = Diou(loc_p, loc_t, phase)
         elif self.type_loc == "Ciou":
-            loss_l == Ciou(loc_p, loc_t)
+            loss_l = Ciou(loc_p, loc_t, phase)
         else:
           print("invalid type_loc, get {}".format(self.type_loc))
 

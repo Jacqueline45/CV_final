@@ -211,7 +211,7 @@ def val(net, epoch):
     # forward
     with torch.no_grad():
         out = net(images)
-    loss_l, loss_c, loss_landm = criterion(out, priors, targets)
+    loss_l, loss_c, loss_landm = criterion(out, priors, targets, 'val')
     loss = cfg['loc_weight'] * loss_l + loss_c + loss_landm
     
 
