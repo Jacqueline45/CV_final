@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
-from utils.box_utils import match, log_sum_exp, Diou
+from utils.box_utils import match, log_sum_exp, Diou, Ciou
 from data import cfg_mnet
 GPU = cfg_mnet['gpu_train']
 
@@ -98,7 +98,11 @@ class MultiBoxLoss(nn.Module):
         if self.type_loc == "L1":
             loss_l = F.smooth_l1_loss(loc_p, loc_t, reduction='sum')
         elif self.type_loc == "Diou":
-            loss_1 = Diou(loc_p, loc_t)
+            loss_l = Diou(loc_p, loc_t)
+        elif self.type_loc == "Ciou":
+            loss_l == Ciou(loc_p, loc_t)
+        else:
+          print("invalid type_loc, get {}".format(self.type_loc))
 
         # Compute max conf across batch for hard negative mining
         batch_conf = conf_data.view(-1, self.num_classes)
