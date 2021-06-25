@@ -1,10 +1,51 @@
 # CV_final
 ## Modification
 Modify from : https://github.com/biubug6/Pytorch_Retinaface  
-- ```train.py```: add tensorboard for train loss, **validation loss not yet written**  
-- ```config.py```: pretrain, True->False
-- ```test_widerface.py```: change read data way, **not yet parallelize (original version process each image one by one, I think the time is acceptable when the model detects reasonable number of faces)**
+- Model structure  
+  -  New backbone
+      - mobile net v1 0.25 (default) 
+      - mobile net v1 0.5 
+      - mobile net v2 
+      - mobile net v3 small 
+      - squeeze net  
+  - More feature maps  
+    -  3 (default)
+    -  4 (for mobile net v2)
+- Data augmentatation  
+  - Add additional photometric transformation by imgaug
+- Location loss
+  - smooth l1 loss (default)
+  - D-IoU loss
+  - C-IoU loss
+- Optimizer
+  - SGD (default)  
+  - Adam 
+## Model size  
+backbone | num of feature maps | model size (MB)
+--------|:---------------------:|--------------
+mobile net v1 0.25 | 3 | 1.7
+mobile net v1 0.5 | 3| 4.2
+mobile net v2 | 4 | 3.9 
+mobile net v3 | 3 | 4.3
+
+NOTE: layers of extracte feature maps and output channel size of convolution layers are defined in ```config.py```
 ## Usage
+- train
+```
+python train.py --network ["mobile0.25" or "resnet50" or "squeezenet1_1_small" or "mbnetv3" or "mbnetv10.5" or "mbnetv2"] \
+--run [experiment name] --save_dir [root dir for weights, loginfo]  \
+--training_dataset [path to train/label.txt] --val_dataset [path to val/label.txt] \
+--optim [Adam or SGD] --lr [lr] --momentum [momentum] \
+-- type_loc ["L1" or "Diou" or "Ciou"] --aug [True for additional photometric augmentation] \
+[--loadinfo_dir [path to dir that stores train_log.csv & val_log.csv]]  [--resume_net [model path]] [--resume_epoch [epoch]]
+```
+- test
+```
+python test_widerface.py --trained_model [model path] --network ["mobile0.25" or "resnet50" or "squeezenet1_1_small" or "mbnetv3" or "mbnetv10.5" or "mbnetv2"] --txt_pth [outut txt path] --mode [val or test] --data_dir [dir to CV_dataset]
+```
+Generate solution text file.  
+- evaluation
+## Usage (Team member)
 First, git clone this repo (specify -b dev), and download dataset, toolkit on colab.
 ```
 !gdown --id '12gyZX7DMlyPsSHtXalwB44xtkp1hu2H2' --output face_detection.zip
@@ -14,8 +55,11 @@ First, git clone this repo (specify -b dev), and download dataset, toolkit on co
 - train
 ```
 % cd　/content/CV_final/
-!CUDA_VISIBLE_DEVICES=0 python train.py --network mobile0.25 --run [experiment name] --save_dir [root dir for weights, loginfo]  \
+!CUDA_VISIBLE_DEVICES=0 python train.py --network ["mobile0.25" or "resnet50" or "squeezenet1_1_small" or "mbnetv3" or "mbnetv10.5" or "mbnetv2"] \
+--run [experiment name] --save_dir [root dir for weights, loginfo]  \
 --training_dataset [path to train/label.txt] --val_dataset [path to val/label.txt] \
+--optim [Adam or SGD] --lr [lr] --momentum [momentum] \
+-- type_loc ["L1" or "Diou" or "Ciou"] --aug [True for additional photometric augmentation] \
 [--loadinfo_dir [path to dir that stores train_log.csv & val_log.csv]]  [--resume_net [model path]] [--resume_epoch [epoch]]
 ```
 Recommend saving weights to google drive, i.e. save_dir should be dir in google drive  
