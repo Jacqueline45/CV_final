@@ -41,10 +41,27 @@ python train.py --network ["mobile0.25" or "resnet50" or "squeezenet1_1_small" o
 ```
 - test
 ```
-python test_widerface.py --trained_model [model path] --network ["mobile0.25" or "resnet50" or "squeezenet1_1_small" or "mbnetv3" or "mbnetv10.5" or "mbnetv2"] --txt_pth [outut txt path] --mode [val or test] --data_dir [dir to CV_dataset]
+python test_widerface.py --trained_model [model path] --network ["mobile0.25" or "resnet50" or "squeezenet1_1_small" or "mbnetv3" or "mbnetv10.5" or "mbnetv2"] --txt_pth [outut txt path] --mode [val or test]
 ```
+The face_detection/ folder should be on the same folder level with this project folder.  
 Generate solution text file.  
 - evaluation
+```
+python3 setup.py build_ext --inplace
+python3 evaluation.py  -p [path to solution txt] -g ./ground_truth/val_gt.pkl -lm
+```
+## Reproduce
+- train
+```
+python train.py --network mobile0.25 --optim Adam --lr 1e-3 --type_loc L1 --aug False\
+--run [experiment name] --save_dir [root dir for weights, loginfo]  \
+--training_dataset [path to train/label.txt] --val_dataset [path to val/label.txt]
+```
+- test
+```
+python test_widerface.py --trained_model [model path] --network mobile0.25 --txt_pth [outut txt path] --mode [val or test]
+```
+NOTE: The face_detection/ folder should be on the same folder level with this project folder.  
 ## Usage (Team member)
 First, git clone this repo (specify -b dev), and download dataset, toolkit on colab.
 ```
