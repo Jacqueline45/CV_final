@@ -1,10 +1,26 @@
 # CV_final
 ## Modification
 Modify from : https://github.com/biubug6/Pytorch_Retinaface  
-- ```train.py```: add tensorboard for train loss, **validation loss not yet written**  
-- ```config.py```: pretrain, True->False
-- ```test_widerface.py```: change read data way, **not yet parallelize (original version process each image one by one, I think the time is acceptable when the model detects reasonable number of faces)**
-## Usage
+- Model structure  
+  -  New backbone
+      - mobile net v1 0.25 (default) 
+      - mobile net v1 0.5
+      - mobile net v2
+      - mobile net v3 small
+      - squeeze net  
+  - More feature maps  
+    -  3 (default)
+    -  4 (for mobile net v2)
+- Data augmentatation  
+  - Add additional photometric transformation by imgaug
+- Location loss
+  - smooth l1 loss (default)
+  - D-IoU loss
+  - C-IoU loss
+- Optimizer
+  - SGD (default)  
+  - Adam 
+## Usage (Team member)
 First, git clone this repo (specify -b dev), and download dataset, toolkit on colab.
 ```
 !gdown --id '12gyZX7DMlyPsSHtXalwB44xtkp1hu2H2' --output face_detection.zip
