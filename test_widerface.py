@@ -30,6 +30,7 @@ parser.add_argument('-s', '--save_image', action="store_true", default=False, he
 parser.add_argument('--vis_thres', default=0.5, type=float, help='visualization_threshold')
 parser.add_argument('--txt_pth', default="./solution.txt")
 parser.add_argument('--mode', default="test", help="test or val")
+parser.add_argument('--data_dir', default='./', help="dir to C_dataset/")
 args = parser.parse_args()
 
 
@@ -104,7 +105,8 @@ if __name__ == '__main__':
 
     # with open(testset_list, 'r') as fr:
     #     test_dataset = fr.read().split()
-    test_dataset = glob("../face_detection/CV_dataset/{}/images/*.jpg".format(args.mode))
+
+    test_dataset = glob(os.path.join(args.data_dir, args.mode, 'images', "*.jpg"))
     num_images = len(test_dataset)
 
     _t = {'forward_pass': Timer(), 'misc': Timer()}
@@ -115,7 +117,7 @@ if __name__ == '__main__':
     for i, img_pth in enumerate(test_dataset):
         # image_path = testset_folder + img_name
         img_raw = cv2.imread(img_pth, cv2.IMREAD_COLOR)
-        img_name = img_pth.replace("../face_detection/CV_dataset/{}/images/".format(args.mode), "").replace(".jpg", "")
+        img_name = img_pth.replace(os.path.join(args.data_dir, args.mode, "images"), "").replace("/", "").replace(".jpg", "")
         img = np.float32(img_raw)
 
         # testing scale
