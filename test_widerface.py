@@ -4,11 +4,11 @@ import argparse
 import torch
 import torch.backends.cudnn as cudnn
 import numpy as np
-from data import cfg_mnet, cfg_re50, cfg_snet, cfg_mbnetv3, cfg_mnet_0_5
+from data import cfg_mnet, cfg_re50, cfg_snet, cfg_mbnetv3, cfg_mnet_0_5, cfg_mnetv2
 from layers.functions.prior_box import PriorBox
 from utils.nms.py_cpu_nms import py_cpu_nms
 import cv2
-from models.retinaface import RetinaFace
+from models.retinaface import RetinaFace,  RetinaFace_4feat
 from utils.box_utils import decode, decode_landm
 from utils.timer import Timer
 from glob import glob
@@ -82,9 +82,14 @@ if __name__ == '__main__':
     elif args.network == "mbnetv3":
         cfg = cfg_mbnetv3
     elif args.network ==  "mbnetv10.5":
-    	cfg = cfg_mnet_0_5
+        cfg = cfg_mnet_0_5
+    elif args.network ==  "mbnetv2":
+        cfg = cfg_mnetv2
     # net and model
-    net = RetinaFace(cfg=cfg, phase = 'test')
+    if args.network == "mbnetv2":
+        net = RetinaFace_4feat(cfg=cfg)
+    else:
+        net = RetinaFace(cfg=cfg)
     net = load_model(net, args.trained_model, args.cpu)
     net.eval()
     print('Finished loading model!')
